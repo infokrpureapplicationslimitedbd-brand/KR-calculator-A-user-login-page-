@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+<title>KR Calculator A — Login</title>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://apis.google.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+        :root {
+            --green: #22c55e; --green-dark: #15803d; --red: #ef4444;
+            --text: #f1f5f9; --muted: #cbd5e1;
+            --card: rgba(10,20,15,0.55); --input-bg: rgba(5,12,8,0.55);
+            --border: rgba(255,255,255,0.2);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+        body {
+            font-family: 'Hind Siliguri','Plus Jakarta Sans',-apple-system,sans-serif;
+            min-height:100vh; background-color:#071108;
+            background-image:url('https://i.ibb.co/0ynMQ4vM/KR-Pure-1792663530679.jpg');
+            background-size:cover; background-position:center; background-attachment:scroll;
+            color:var(--text); overflow-x:hidden; overflow-y:auto; overscroll-behavior:none; -webkit-overflow-scrolling:touch;
+        }
+        body::before { content:''; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:0; pointer-events:none; }
+        .wrap { position:relative; z-index:10; width:100%; max-width:440px; margin:0 auto; padding:24px 20px 50px; display:flex; flex-direction:column; align-items:center; }
+        .brand { text-align:center; margin-bottom:18px; width:100%; }
+        .logo-box { width:80px; height:80px; margin:0 auto 12px; border-radius:14px; overflow:hidden; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; }
+        .logo-box img { width:80px; height:80px; object-fit:cover; border-radius:14px; }
+        .btitle { font-size:24px; font-weight:800; color:#fff; text-shadow:0 2px 8px rgba(0,0,0,0.9); }
+        .bsub { font-size:14px; font-weight:600; color:#e2e8f0; margin-top:4px; text-shadow:0 1px 4px rgba(0,0,0,0.8); }
+        .bdesc { font-size:12.5px; color:var(--muted); line-height:1.55; margin-top:6px; padding:0 8px; text-shadow:0 1px 4px rgba(0,0,0,0.8); }
+        .card { background:var(--card); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border:1px solid var(--border); border-radius:22px; padding:22px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); }
+        .panel { display:none; width:100%; }
+        .panel.on { display:block; }
+        .ib { margin-bottom:13px; width:100%; }
+        .ib label { display:block; font-size:13px; font-weight:600; color:#f1f5f9; margin-bottom:5px; text-shadow:0 1px 3px rgba(0,0,0,0.8); }
+        .ib input {
+            width:100%; padding:12px; background:var(--input-bg);
+            border:1px solid var(--border); border-radius:11px; color:#fff; font-size:16px;
+            outline:none; transition:0.2s; -webkit-appearance:none; appearance:none;
+        }
+        .ib input::placeholder { color:#94a3b8; }
+        .ib input:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(34,197,94,0.3); background:rgba(5,12,8,0.75); }
+        .ib input:disabled { opacity:.35; }
+        .help { font-size:11px; color:var(--muted); margin-top:4px; display:block; }
+        .btn { width:100%; padding:13px; background:linear-gradient(135deg,var(--green-dark),var(--green)); color:#fff; border:none; border-radius:11px; font-size:14.5px; font-weight:700; cursor:pointer; box-shadow:0 8px 18px -5px rgba(34,197,94,0.4); margin-top:4px; display:flex; align-items:center; justify-content:center; gap:8px; transition:transform 0.12s ease, opacity 0.15s ease, box-shadow 0.15s ease; font-family:inherit; position:relative; overflow:hidden; -webkit-user-select:none; user-select:none; }
+        .btn:hover:not(:disabled) { box-shadow:0 10px 22px -4px rgba(34,197,94,0.55); }
+        .btn:active:not(:disabled) { transform:scale(0.96); opacity:0.92; }
+        .btn:disabled { opacity:0.65; cursor:not-allowed; }
+        .btn.loading { opacity:0.8; pointer-events:none; }
+        .btn.loading .spin-dot {
+            display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,0.35);
+            border-top-color:#fff; border-radius:50%; animation:spin 0.65s linear infinite; flex-shrink:0;
+        }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .btn.sec { background:rgba(0,0,0,0.4); border:1.5px solid var(--border); color:#fff; box-shadow:none; margin-top:8px; }
+        .btn.sec:hover:not(:disabled) { background:rgba(0,0,0,0.55); box-shadow:none; }
+        .btn.google { background:#fff; color:#1f2937; box-shadow:0 4px 12px rgba(0,0,0,0.2); border:1px solid rgba(0,0,0,0.08); }
+        .btn.google:hover:not(:disabled) { box-shadow:0 6px 16px rgba(0,0,0,0.28); }
+        .btn.google img { width:18px; height:18px; }
+        .btn.google.loading .spin-dot { border-color:rgba(0,0,0,0.2); border-top-color:#1f2937; }
+        .back-app { transition:transform 0.12s ease, opacity 0.15s ease; }
+        .back-app:active { transform:scale(0.96); opacity:0.85; }
+        .toast-wrap { position:fixed; top:16px; right:12px; z-index:9999; display:flex; flex-direction:column; gap:8px; max-width:min(300px,calc(100vw - 24px)); pointer-events:none; }
+        .toast { pointer-events:auto; background:rgba(39,205,120,0.95); color:#fff; border-radius:10px; padding:10px 12px; font-size:13px; font-weight:600; box-shadow:0 4px 14px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); opacity:1; }
+        .toast.err { background:rgba(255,75,75,0.95); }
+        .toast.info { background:rgba(59,130,246,0.95); }
+        .success-box { text-align:center; padding:12px 0; }
+        .success-box .big-icon { font-size:3rem; margin-bottom:10px; }
+        .success-box h3 { color:var(--green); font-size:1.2rem; margin-bottom:8px; }
+        .success-box p { color:var(--muted); font-size:13px; line-height:1.5; margin-bottom:16px; white-space:pre-line; }
+        .year-grid {
+            display:grid; grid-template-columns:repeat(4,1fr); gap:8px; max-height:220px;
+            overflow-y:auto; overflow-x:hidden; padding:8px 0;
+            overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
+            scrollbar-width:none; -ms-overflow-style:none; touch-action:pan-y;
+        }
+        .year-grid::-webkit-scrollbar { display:none; width:0; height:0; }
+        .year-grid.locked { opacity:.35; pointer-events:none; }
+        .year-btn {
+            padding:10px 4px; border-radius:10px; border:1px solid var(--border);
+            background:rgba(5,12,8,0.55); color:#fff; font-weight:700; font-size:14px; cursor:pointer;
+            font-family:inherit; transition:transform 0.1s ease, background 0.15s ease, border-color 0.15s ease, opacity 0.12s ease;
+        }
+        .year-btn:active { transform:scale(0.93); opacity:0.9; }
+        .year-btn.sel { background:linear-gradient(135deg,var(--green-dark),var(--green)); border-color:var(--green); }
+        * { scroll-behavior:auto !important; }
+        .selected-year { text-align:center; color:var(--green); font-weight:700; margin-top:6px; font-size:14px; }
+    </style>
+</head>
+<body>
+    <div class="toast-wrap" id="toasts"></div>
+    <div class="wrap">
+
+        <div class="brand">
+            <div class="logo-box" id="sharedLogoBox">
+                <img id="appLogo" src="https://i.ibb.co/mrtzYc4N/KR-Pure-1792663913268.png" alt="App" width="80" height="80">
+            </div>
+            <h1 class="btitle" id="appName">KR Calculator A</h1>
+            <h2 class="bsub" id="heading">লগইন / সাইন ইন</h2>
+            <p class="bdesc" id="desc">শুধু Google অ্যাকাউন্ট দিয়ে নিরাপদ লগইন।</p>
+        </div>
+
+        <div class="card">
+            <!-- LOGIN — শুধু Google -->
+            <div id="login" class="panel on">
+                <div style="text-align:center;margin-bottom:18px;padding:4px 2px;">
+                    <p style="font-size:15px;font-weight:700;color:#fff;line-height:1.55;margin-bottom:10px;">🌟 আপনার দুর্দান্ত ডিজিটাল যাত্রা শুরু হোক এখনই! 🚀</p>
+                    <p style="font-size:13px;color:var(--muted);line-height:1.7;text-align:left;">
+                        🔒 আপনার সর্বোচ্চ নিরাপত্তা ও নির্বিঘ্ন অভিজ্ঞতা নিশ্চিত করতে আমরা ব্যবহার করছি বিশ্বের সবচেয়ে সেরা <b style="color:#4ade80;">Google সিকিউরিটি সিস্টেম</b>। 🔑 কোনো জটিল পাসওয়ার্ড মনে রাখার ঝামেলা ছাড়াই মাত্র ১-ক্লিকে আমাদের সাথে যুক্ত হোন! ✨<br><br>
+
+                        <b style="color:#38bdf8;">🎁 লগইন করার অসাধারণ সব সুবিধাসমূহ:</b><br>
+                        • ☁️ <b>স্বয়ংক্রিয় ক্লাউড ব্যাকআপ:</b> আপনার কাজের সকল প্রোগ্রেস ও ডেটা থাকবে আজীবন নিরাপদ।<br>
+                        • 📲 <b>মাল্টি-ডিভাইস এক্সেস:</b> ফোন, ট্যাব বা ল্যাপটপ—যেকোনো ডিভাইস থেকে নিজের প্রোফাইলে ঢুকুন।<br>
+                        • ⚡ <b>সুপারফাস্ট সাইন-ইন:</b> কোনো ফর্ম পূরণ না করেই মাত্র এক ক্লিকে নিমেষেই অ্যাপে প্রবেশ।<br>
+                        • 👑 <b>এক্সক্লুসিভ ফিচার ও অফার:</b> আমাদের মেম্বার হয়ে বিশেষ সব আপডেট ও প্রিমিয়াম সুবিধা উপভোগ করুন।<br><br>
+
+                        <b style="color:#f87171;">⚠️ সাইন-ইন না করলে যেসব বড় ক্ষতি বা অসুবিধা হবে:</b><br>
+                        • 🚫 <b>সীমিত ব্যবহার:</b> অনেক জরুরি ও দরকারি ফিচার ব্যবহারে বাধা তৈরি হবে।<br>
+                        • ❓ <b>কোনো প্রোফাইল আইডেন্টিটি থাকবে না:</b> আপনার ইউনিক আইডি না থাকায় যেকোনো সমস্যায় সাপোর্ট পাওয়া কঠিন হবে।
+                    </p>
+                </div>
+                <button type="button" id="btnGoogle" class="btn google">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt=""> Google দিয়ে লগইন / অ্যাকাউন্ট
+                </button>
+            </div>
+
+            <!-- YEAR / DATE (শুধু নতুন ইউজার) -->
+            <div id="birth" class="panel">
+                <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:12px;line-height:1.55;">
+                    Google অ্যাকাউন্টের জন্য জন্ম সাল <b>অথবা</b> পূর্ণ তারিখ দিন (যেকোনো একটি)। ৫ বছরের নিচে অনুমোদিত নয়।
+                </p>
+                <div class="ib" style="margin-bottom:10px;">
+                    <label>জন্ম তারিখ লিখুন</label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <div style="flex:1;text-align:center;">
+                            <small class="help" style="margin:0 0 4px;display:block;">দিন</small>
+                            <input type="text" inputmode="numeric" maxlength="2" id="gDay" placeholder="DD" style="text-align:center;">
+                        </div>
+                        <div style="flex:1;text-align:center;">
+                            <small class="help" style="margin:0 0 4px;display:block;">মাস</small>
+                            <input type="text" inputmode="numeric" maxlength="2" id="gMonth" placeholder="MM" style="text-align:center;">
+                        </div>
+                        <div style="flex:1.2;text-align:center;">
+                            <small class="help" style="margin:0 0 4px;display:block;">বছর</small>
+                            <input type="text" inputmode="numeric" maxlength="4" id="gYear" placeholder="YYYY" style="text-align:center;">
+                        </div>
+                    </div>
+                    <small class="help">উদাহরণ: দিন ০৫ · মাস ০৩ · বছর ২০০৮</small>
+                </div>
+                <div class="ib" style="margin-top:10px;">
+                    <label for="gAddress">ঠিকানা <span style="font-weight:400;color:var(--muted);">(ঐচ্ছিক)</span></label>
+                    <input type="text" id="gAddress" maxlength="240" autocomplete="street-address" placeholder="আপনার ঠিকানা">
+                </div>
+                <p style="font-size:12px;color:var(--muted);text-align:center;margin:8px 0;">— অথবা নিচ থেকে শুধু সাল বেছে নিন —</p>
+                <div class="year-grid" id="grid"></div>
+                <div class="selected-year" id="selTxt"></div>
+                <div id="age" style="text-align:center;font-size:15px;font-weight:700;color:#4ade80;margin:8px 0;min-height:1.4em;"></div>
+                <button type="button" class="btn sec" id="btnReset" style="margin-top:0;margin-bottom:8px;">আবার নির্বাচন করুন</button>
+                <button type="button" id="btnConfirm" class="btn" disabled>নিশ্চিত করুন</button>
+                <button type="button" class="btn sec" id="btnCancel">বাতিল</button>
+            </div>
+
+            <!-- SUCCESS -->
+            <div id="success" class="panel">
+                <div class="success-box">
+                    <div class="big-icon">✅</div>
+                    <h3 id="okTitle">লগইন সফল!</h3>
+                    <p id="okMsg">অ্যাপে ফিরে যান — অটো লগইন হবে।</p>
+                    <button type="button" class="btn" id="btnReturn">অ্যাপে ফিরে যান 🚀</button>
+                    <button type="button" class="btn sec" id="btnSwitchAcc">অন্য অ্যাকাউন্টে লগইন</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+const GITHUB_LOGIN_URL = "https://khalidurrahmanakondo-prog.github.io/My-APK-/";
+firebase.initializeApp({
+  apiKey: "AIzaSyDUrso1G3orSxiZGTQ1vNYnmN0jdnJ3nSM",
+  authDomain: "kr-calculator-a-bc1e2.firebaseapp.com",
+  databaseURL: "https://kr-calculator-a-bc1e2-default-rtdb.firebaseio.com",
+  projectId: "kr-calculator-a-bc1e2",
+  storageBucket: "kr-calculator-a-bc1e2.appspot.com",
+  messagingSenderId: "916522220428",
+  appId: "1:916522220428:web:b39f14d38c9fe45ecaf4a9",
+  measurementId: "G-K4XGHWM4QF"
+});
+const db = firebase.firestore(), auth = firebase.auth();
+let rtdb = null; try { rtdb = firebase.database(); } catch (e) {}
+
+const COL = "KR pro math master";
+const MIN_AGE = 5;
+const TS = () => firebase.firestore.FieldValue.serverTimestamp();
+const $ = id => document.getElementById(id);
+const q = new URLSearchParams(location.search);
+
+function toast(m, t) {
+  const e = document.createElement("div"); e.className = "toast " + (t || ""); e.textContent = m;
+  $("toasts").appendChild(e); setTimeout(() => e.remove(), 4000);
+}
+function go(id) {
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("on")); $(id).classList.add("on");
+  const m = { login: ["লগইন / সাইন ইন", "শুধু Google অ্যাকাউন্ট দিয়ে নিরাপদ লগইন।"], birth: ["জন্ম সাল", "সাল নির্বাচন করুন।"], success: ["সফল!", "অ্যাপে ফিরে যান।"] }[id];
+  $("heading").textContent = m[0]; $("desc").textContent = m[1];
+}
+function busy(btn, on, txt) {
+  if (on) {
+    if (!btn.dataset.o) btn.dataset.o = btn.innerHTML;
+    btn.disabled = true;
+    btn.classList.add("loading");
+    btn.innerHTML = '<span class="spin-dot"></span> ' + (txt || "...");
+  } else {
+    btn.disabled = false;
+    btn.classList.remove("loading");
+    if (btn.dataset.o) { btn.innerHTML = btn.dataset.o; delete btn.dataset.o; }
+  }
+}
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+const userRef = uid => db.collection(COL).doc(uid);
+
+function packUser(uid, data) {
+  data = data || {};
+  return {
+    uid: data.uid || uid,
+    name: data.name || "",
+    email: String(data.email || "").toLowerCase().trim(),
+    birth_year: data.birth_year || "",
+    birth_date: data.birth_date || "",
+    joined: data.joined || "",
+    address: data.address || "",
+    avatar: data.avatar || null,
+    credit: Number(data.credit || 0),
+    app_permission: data.app_permission !== false
+  };
+}
+
+/**
+ * ইমেইল দিয়ে আগের অ্যাকাউন্ট বা ব্লক স্টেট চেক করার ফাংশন
+ */
+async function lookupUser(email) {
+  email = String(email || "").toLowerCase().trim();
+  if (!email) return null;
+
+  const snap = await db.collection(COL).where("email", "==", email).limit(1).get();
+  for (const d of snap.docs) {
+    if (d.id.startsWith("_")) continue;
+    const data = d.data() || {};
+    return { profile: packUser(data.uid || d.id, data), blocked: data.blocked === true };
+  }
+  return null;
+}
+
+/**
+ * ইমেইল ব্লক করার ফাংশন (৫ বছরের নিচে সিলেক্ট করলে)
+ */
+async function blockUserEmail(info, age) {
+  const email = String(info.email || "").toLowerCase().trim();
+  if (!email) return;
+
+  const docId = "BLOCKED-" + Math.floor(10000000 + Math.random() * 90000000);
+  await db.collection(COL).doc(docId).set({
+    email: email,
+    name: info.name || "",
+    blocked: true,
+    reason: "Under minimum age limit (" + age + " years)",
+    blocked_at: TS(),
+    provider: "google"
+  });
+}
+
+/**
+ * নতুন ইমেলের জন্য ৮ ডিজিটের UID সহ ইউজার অ্যাকাউন্ট তৈরির ফাংশন
+ */
+async function createUserDoc(info) {
+  const joined = new Date().toLocaleDateString("en-GB");
+  const makeProfile = (uid, full) => ({
+    uid: uid, name: full.name, email: full.email,
+    birth_year: full.birth_year, birth_date: full.birth_date,
+    joined: full.joined, address: full.address, avatar: full.avatar,
+    credit: 0, app_permission: true
+  });
+  const buildFull = (uid) => ({
+    uid: uid,
+    name: info.name || "",
+    email: String(info.email || "").toLowerCase().trim(),
+    birth_year: info.birth_year || "",
+    birth_date: info.birth_date || "",
+    joined: joined,
+    address: info.address || "",
+    avatar: info.avatar || null,
+    credit: 0,
+    app_permission: true,
+    provider: "google",
+    auth_uid: info.auth_uid || "",
+    email_verified: info.email_verified === true,
+    created_at: TS()
+  });
+
+  // ৮ ডিজিটের ইউনিক KR-UID জেনারেট (KR-XXXXXXXX)
+  for (let i = 0; i < 6; i++) {
+    const uid = "KR-" + Math.floor(10000000 + Math.random() * 90000000);
+    const ref = userRef(uid);
+    const full = buildFull(uid);
+    try {
+      const created = await db.runTransaction(async tx => {
+        const snap = await tx.get(ref);
+        if (snap.exists) return false;
+        tx.set(ref, full);
+        return true;
+      });
+      if (created) return makeProfile(uid, full);
+    } catch (txError) {
+      const code = String(txError && txError.code || "");
+      if (code === "permission-denied" || code === "firestore/permission-denied") {
+        const directUid = "KR-" + Math.floor(10000000 + Math.random() * 90000000);
+        const directFull = buildFull(directUid);
+        await userRef(directUid).set(directFull);
+        return makeProfile(directUid, directFull);
+      }
+      throw txError;
+    }
+  }
+
+  const fallbackUid = "KR-" + Math.floor(10000000 + Math.random() * 90000000);
+  const fallbackFull = buildFull(fallbackUid);
+  await userRef(fallbackUid).set(fallbackFull);
+  return makeProfile(fallbackUid, fallbackFull);
+}
+
+function handoff(p) {
+  const uid = String(p.uid), now = Date.now();
+  const pay = {
+    uid: uid, name: p.name || "", email: String(p.email || "").toLowerCase(),
+    avatar: p.avatar || "", birth_year: p.birth_year || "", birth_date: p.birth_date || "",
+    joined: p.joined || "", address: p.address || "", credit: Number(p.credit || 0),
+    app_permission: p.app_permission !== false, at: now, expiresAt: now + 30 * 60 * 1000
+  };
+  try {
+    localStorage.setItem("kr_login_session", JSON.stringify(pay));
+    localStorage.setItem("kr_user_uid", uid);
+    localStorage.setItem("kr_cur_user", JSON.stringify({
+      user_profile: {
+        uid: uid, name: p.name, email: p.email, birth_year: p.birth_year,
+        birth_date: p.birth_date, joined: p.joined, address: p.address || "",
+        app_permission: p.app_permission !== false
+      },
+      user_credit: Number(p.credit || 0),
+      avatar: p.avatar
+    }));
+  } catch (e) {}
+
+  const jobs = [];
+  if (rtdb) {
+    try { jobs.push(Promise.resolve(rtdb.ref(COL + "/লগইন_সেশন/শেষ").set(pay)).catch(function(){})); } catch (e) {}
+    try { jobs.push(Promise.resolve(rtdb.ref(COL + "/LoginSessions/last").set(pay)).catch(function(){})); } catch (e) {}
+  }
+  return Promise.all(jobs).then(function(){ return true; }).catch(function(){ return false; });
+}
+
+function notifyApp(p) {
+  const m = { type: "KR_LOGIN", uid: p.uid, ver: "flat", credit: Number(p.credit || 0), name: p.name || "", email: p.email || "", avatar: p.avatar || "" };
+  try { window.opener && window.opener.postMessage(m, "*"); } catch (e) {}
+  try { const bc = new BroadcastChannel("kr_auth"); bc.postMessage(m); setTimeout(() => bc.close(), 2000); } catch (e) {}
+  try { window.Android && window.Android.onLoginSuccess && window.Android.onLoginSuccess(JSON.stringify(m)); } catch (e) {}
+  try { if (window.parent && window.parent !== window) window.parent.postMessage(m, "*"); } catch (e) {}
+}
+
+let CUR = null;
+function returnToApp() {
+  try {
+    if (window.Android || /android_asset/i.test(location.href) || /file:/i.test(location.protocol)) {
+      location.replace("index.html");
+      return;
+    }
+  } catch (e) {}
+  try {
+    const ret = q.get("return") || document.referrer || GITHUB_LOGIN_URL;
+    if (CUR && CUR.uid && ret && /^(https?:|content:|intent:|android-app:)/i.test(ret)) {
+      try {
+        const u = new URL(ret);
+        u.searchParams.set("uid", CUR.uid);
+        location.replace(u.toString());
+        return;
+      } catch (e1) {
+        const joiner = ret.indexOf("?") >= 0 ? "&" : "?";
+        location.replace(ret + joiner + "uid=" + encodeURIComponent(CUR.uid));
+        return;
+      }
+    }
+  } catch (e) {}
+  try { if (window.opener) { window.opener.focus(); window.close(); return; } } catch (e) {}
+  try { if (history.length > 1) { history.back(); return; } } catch (e) {}
+  try { window.close(); } catch (e) {}
+  try { location.replace(GITHUB_LOGIN_URL); } catch (e) {}
+  toast("অ্যাপে ফিরে যান — লগইন সেভ হয়েছে।", "info");
+}
+
+async function finish(p, title) {
+  if (window._krFinishing) return;
+  window._krFinishing = true;
+  CUR = p;
+  const rt = handoff(p);
+  notifyApp(p);
+  $("okTitle").textContent = title || "লগইন সফল!";
+  $("okMsg").innerHTML =
+    (p.name ? "নাম: <b>" + esc(p.name) + "</b><br>" : "") +
+    (p.email ? "ইমেইল: <b>" + esc(p.email) + "</b><br>" : "") +
+    "UID: <b style=\"color:#4ade80\">" + esc(p.uid) + "</b><br>" +
+    (p.birth_year ? "জন্ম সাল: <b>" + esc(p.birth_year) + "</b><br>" : "") +
+    (p.birth_date ? "জন্ম তারিখ: <b>" + esc(p.birth_date) + "</b><br>" : "") +
+    (p.joined ? "যোগদান: <b>" + esc(p.joined) + "</b><br>" : "") +
+    (p.address ? "ঠিকানা: <b>" + esc(p.address) + "</b><br>" : "") +
+    "<br><span id=\"okCountdown\">২ সেকেন্ড পর অ্যাপে ফিরে যাচ্ছে…</span>";
+  go("success");
+  await Promise.race([rt, new Promise(r => setTimeout(r, 800))]);
+  let left = 2;
+  const cd = $("okCountdown");
+  const tick = setInterval(function () {
+    left -= 1;
+    if (cd) cd.textContent = (left > 0 ? left : 0) + " সেকেন্ড পর অ্যাপে ফিরে যাচ্ছে…";
+    if (left <= 0) clearInterval(tick);
+  }, 1000);
+  await new Promise(r => setTimeout(r, 1800));
+  returnToApp();
+  setTimeout(function () { window._krFinishing = false; }, 500);
+}
+
+$("btnReturn").onclick = () => { if (CUR) notifyApp(CUR); returnToApp(); };
+
+/* ---------- জন্ম সাল/তারিখ (শুধু নতুন ইউজার) ---------- */
+const CY = new Date().getFullYear();
+let selYear = null, pend = null;
+const F = ["gDay", "gMonth", "gYear"];
+$("btnSwitchAcc").onclick = () => {
+  CUR = null; window._krFinishing = false;
+  try { localStorage.removeItem("kr_cur_user"); localStorage.removeItem("kr_login_session"); } catch (e) {}
+  try { auth.signOut(); } catch (e) {}
+  go("login");
+};
+(function () {
+  const g = $("grid");
+  for (let y = CY; y >= CY - 100; y--) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "year-btn"; b.textContent = y;
+    b.onclick = () => {
+      F.forEach(i => $(i).value = "");
+      g.querySelectorAll(".sel").forEach(x => x.classList.remove("sel"));
+      b.classList.add("sel"); selYear = y; refresh();
+    };
+    g.appendChild(b);
+  }
+})();
+function state() {
+  const [d, m, y] = F.map(i => $(i).value), now = new Date();
+  if (d || m || y) {
+    if (d && m && y.length === 4) {
+      const D = +d, M = +m, Y = +y, dt = new Date(Y, M - 1, D);
+      if (Y >= 1920 && Y <= CY && dt.getFullYear() === Y && dt.getMonth() === M - 1 && dt.getDate() === D && dt <= now) {
+        let age = CY - Y; if (now.getMonth() < M - 1 || (now.getMonth() === M - 1 && now.getDate() < D)) age--;
+        return { valid: true, year: Y, age, date: String(D).padStart(2, "0") + "/" + String(M).padStart(2, "0") + "/" + Y };
+      }
+      return { valid: false, bad: true };
+    }
+    return { valid: false };
+  }
+  return selYear ? { valid: true, year: selYear, age: CY - selYear } : { valid: false };
+}
+function refresh() {
+  const typed = F.some(i => $(i).value);
+  $("grid").classList.toggle("locked", typed);
+  F.forEach(i => $(i).disabled = !!selYear);
+  const s = state(); $("btnConfirm").disabled = !s.valid;
+  $("selTxt").textContent = selYear ? "নির্বাচিত: " + selYear : "";
+  const a = $("age");
+  if (s.valid) { a.textContent = "আপনার বয়স: " + s.age + " বছর"; a.style.color = s.age < MIN_AGE ? "#ef4444" : "#4ade80"; }
+  else if (s.bad) { a.textContent = "তারিখটি সঠিক নয়"; a.style.color = "#ef4444"; }
+  else a.textContent = "";
+}
+function resetBirth() {
+  selYear = null; F.forEach(i => { $(i).value = ""; $(i).disabled = false; });
+  $("gAddress").value = "";
+  $("grid").querySelectorAll(".sel").forEach(x => x.classList.remove("sel")); refresh();
+}
+[["gDay", 31, 2], ["gMonth", 12, 2], ["gYear", CY, 4]].forEach(([id, max, len]) => {
+  $(id).addEventListener("input", () => {
+    let v = $(id).value.replace(/\D/g, "").slice(0, len);
+    if (id === "gYear") { if (v.length === 4 && +v > CY) v = v.slice(0, 3); }
+    else { if (v && +v > max) v = v.slice(0, -1); if (v.length > 1 && +v === 0) v = "0"; }
+    $(id).value = v;
+    if (v) { selYear = null; $("grid").querySelectorAll(".sel").forEach(x => x.classList.remove("sel")); }
+    refresh();
+  });
+});
+$("btnReset").onclick = resetBirth;
+$("btnCancel").onclick = () => { pend = null; go("login"); };
+
+$("btnConfirm").onclick = async () => {
+  const s = state(); if (!pend || !s.valid) return;
+  if (window._krConfirmBusy) return;
+  window._krConfirmBusy = true;
+  const info = pend;
+  const btn = $("btnConfirm");
+  
+  if (s.age < MIN_AGE) {
+    busy(btn, true, "যাচাই হচ্ছে…");
+    try {
+      await blockUserEmail(info, s.age);
+      toast("৫ বছরের নিচে অ্যাকাউন্ট অনুমোদিত নয়। আপনার ইমেইলটি ব্লক করা হলো।", "err");
+    } catch (err) {
+      toast("বয়সের সীমাবদ্ধতার কারণে অ্যাকাউন্ট তৈরি করা সম্ভব হয়নি।", "err");
+    } finally {
+      pend = null; window._krConfirmBusy = false; busy(btn, false); go("login");
+    }
+    return;
+  }
+  
+  busy(btn, true, "সেভ হচ্ছে…");
+  try {
+    const p = await createUserDoc({
+      name: info.name, email: info.email, avatar: info.photo, address: $("gAddress").value.trim(),
+      auth_uid: info.auth_uid, email_verified: info.email_verified,
+      birth_year: s.year, birth_date: s.date || ""
+    });
+    pend = null;
+    await finish(p, "অ্যাকাউন্ট তৈরি হয়েছে!");
+  } catch (e) {
+    console.error(e);
+    toast("অ্যাকাউন্ট তৈরি ব্যর্থ। নেটওয়ার্ক পরীক্ষা করুন।", "err");
+    busy(btn, false);
+    refresh();
+  } finally {
+    window._krConfirmBusy = false;
+  }
+};
+
+/* ---------- Google Login Flow ---------- */
+function emailFromIdToken(token) {
+  try {
+    const part = String(token || "").split(".")[1];
+    if (!part) return "";
+    const b64 = part.replace(/-/g, "+").replace(/_/g, "/");
+    const json = atob(b64 + "=".repeat((4 - b64.length % 4) % 4));
+    const payload = JSON.parse(decodeURIComponent(Array.prototype.map.call(json, c => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")).join("")));
+    return payload.email || "";
+  } catch (e) { return ""; }
+}
+
+async function resolveGoogleProfile(resultOrUser) {
+  const result = resultOrUser && resultOrUser.user ? resultOrUser : null;
+  const user = result ? result.user : resultOrUser;
+  if (!user) return null;
+  const profile = (result && result.additionalUserInfo && result.additionalUserInfo.profile) || {};
+  let credential = null;
+  try {
+    credential = (result && result.credential) ||
+      (result && firebase.auth.GoogleAuthProvider.credentialFromResult(result)) || null;
+  } catch (e) {}
+  const googleData = (user.providerData || []).find(x => x && x.providerId === "google.com") || {};
+  let email = user.email || googleData.email || profile.email || emailFromIdToken(credential && credential.idToken);
+  if (!email && credential && credential.accessToken) {
+    try {
+      const response = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: "Bearer " + credential.accessToken }
+      });
+      if (response.ok) {
+        const info = await response.json();
+        email = info.email || "";
+        profile.name = profile.name || info.name;
+        profile.picture = profile.picture || info.picture;
+        profile.email_verified = profile.email_verified || info.email_verified;
+      }
+    } catch (e) {}
+  }
+  if (!email && typeof user.reload === "function") {
+    try { await user.reload(); email = user.email || ""; } catch (e) {}
+  }
+  email = String(email || "").toLowerCase().trim();
+  return {
+    email,
+    displayName: user.displayName || googleData.displayName || profile.name || "",
+    photoURL: user.photoURL || googleData.photoURL || profile.picture || "",
+    uid: user.uid || "",
+    emailVerified: user.emailVerified === true || profile.email_verified === true
+  };
+}
+
+async function processGoogle(resultOrUser) {
+  if (!resultOrUser) { toast("Google সাইন-ইন সম্পন্ন হয়নি। আবার চেষ্টা করুন।", "err"); return; }
+  const gu = await resolveGoogleProfile(resultOrUser);
+  const email = String((gu && gu.email) || "").toLowerCase().trim();
+  if (!email) {
+    toast("Google সাইন-ইন তথ্য যাচাই করা যায়নি।", "err");
+    return;
+  }
+
+  const b = $("btnGoogle");
+  busy(b, true, "অ্যাকাউন্ট যাচাই হচ্ছে…");
+
+  let found = null;
+  try {
+    found = await lookupUser(email);
+  } catch (e) {
+    console.error("Lookup error:", e);
+    busy(b, false);
+    toast("ডেটাবেজ চেক করতে সমস্যা হয়েছে। ইন্টারনেট পরীক্ষা করে আবার চেষ্টা করুন।", "err");
+    return;
+  }
+
+  if (found && found.blocked) {
+    busy(b, false);
+    toast("এই ইমেইলটি নীতিমালার কারণে ব্লক করা হয়েছে। পরবর্তীতে এই ইমেইল দিয়ে লগইন করা যাবে না।", "err");
+    return;
+  }
+
+  if (found) {
+    busy(b, false);
+    let userProfile = found.profile;
+    if (gu && gu.photoURL && !userProfile.avatar) {
+      userProfile.avatar = gu.photoURL;
+      try { await userRef(userProfile.uid).update({ avatar: gu.photoURL }); } catch (err) {}
+    }
+
+    await finish(userProfile, "Google লগইন সফল!");
+    return;
+  }
+
+  busy(b, false);
+  pend = {
+    name: (gu && gu.displayName) || email.split("@")[0] || "ইউজার",
+    email: email,
+    photo: (gu && gu.photoURL) || null,
+    auth_uid: (gu && gu.uid) || "",
+    email_verified: !!(gu && gu.emailVerified)
+  };
+  resetBirth();
+  go("birth");
+  toast("বয়স নিশ্চিতে জন্ম সাল নির্বাচন করুন।", "info");
+}
+
+function gErr(e) {
+  const c = e && e.code || "";
+  if (c === "auth/unauthorized-domain") return "ডোমেইন অনুমোদিত নয়: " + location.hostname;
+  if (c === "auth/operation-not-allowed") return "Firebase-এ Google Sign-In চালু করুন।";
+  if (c === "auth/popup-closed-by-user") return "পপআপ বন্ধ করা হয়েছে।";
+  if (c === "auth/network-request-failed") return "নেটওয়ার্ক সমস্যা।";
+  return "Google ব্যর্থ: " + (e.message || c);
+}
+
+window.receiveNativeGoogleSignIn = async function (info) {
+  try {
+    if (!info) { toast("Google সাইন-ইন সম্পন্ন হয়নি।", "err"); return; }
+    const email = String(info.email || "").toLowerCase().trim();
+    if (!email) { toast("ইমেইল পাওয়া যায়নি।", "err"); return; }
+    const fake = {
+      user: {
+        email: email,
+        displayName: info.name || info.displayName || email.split("@")[0] || "ইউজার",
+        photoURL: info.photo || info.photoURL || "",
+        uid: info.uid || info.auth_uid || "",
+        emailVerified: true,
+        providerData: [{ providerId: "google.com", email: email, displayName: info.name || "", photoURL: info.photo || "" }],
+        reload: async function () {}
+      },
+      additionalUserInfo: { profile: { email: email, name: info.name || "", picture: info.photo || "", email_verified: true } },
+      credential: null
+    };
+    await processGoogle(fake);
+  } catch (e) {
+    console.error(e);
+    toast(gErr(e), "err");
+    busy($("btnGoogle"), false);
+  } finally {
+    window._krGoogleBusy = false;
+  }
+};
+
+$("btnGoogle").onclick = async () => {
+  if (window._krGoogleBusy) return;
+  window._krGoogleBusy = true;
+  const b = $("btnGoogle");
+  if (window.Android && typeof Android.startGoogleSignIn === "function") {
+    busy(b, true, "Google খুলছে…");
+    try {
+      Android.startGoogleSignIn();
+      setTimeout(function () {
+        if (window._krGoogleBusy) {
+          window._krGoogleBusy = false;
+          busy(b, false);
+        }
+      }, 120000);
+    } catch (e) {
+      window._krGoogleBusy = false;
+      busy(b, false);
+      toast("নেটিভ Google খুলতে ব্যর্থ।", "err");
+    }
+    return;
+  }
+  busy(b, true, "Google খুলছে…");
+  const pv = new firebase.auth.GoogleAuthProvider();
+  pv.addScope("openid");
+  pv.addScope("profile");
+  pv.addScope("email");
+  pv.setCustomParameters({ prompt: "select_account consent" });
+  try {
+    try {
+      const r = await auth.signInWithPopup(pv);
+      await processGoogle(r);
+    } catch (e) {
+      if (e.code === "auth/unauthorized-domain") throw e;
+      if (/popup|webview|blocked|cancelled/i.test((e.code || "") + (e.message || "")) && e.code !== "auth/popup-closed-by-user") {
+        await auth.signInWithRedirect(pv);
+        return;
+      }
+      throw e;
+    }
+  } catch (e) {
+    console.error(e);
+    toast(gErr(e), "err");
+  } finally {
+    window._krGoogleBusy = false;
+    busy(b, false);
+  }
+};
+
+(async () => {
+  try {
+    const r = await auth.getRedirectResult();
+    if (r && r.user && !window._krFinishing) await processGoogle(r);
+  } catch (e) {
+    if (e.code && e.code !== "auth/null-user") toast(gErr(e), "err");
+  }
+})();
+</script>
+</body>
+</html>
