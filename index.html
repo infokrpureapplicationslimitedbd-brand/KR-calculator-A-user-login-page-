@@ -66,8 +66,6 @@
         .btn.google:hover:not(:disabled) { box-shadow:0 6px 16px rgba(0,0,0,0.28); }
         .btn.google img { width:18px; height:18px; }
         .btn.google.loading .spin-dot { border-color:rgba(0,0,0,0.2); border-top-color:#1f2937; }
-        .back-app { transition:transform 0.12s ease, opacity 0.15s ease; }
-        .back-app:active { transform:scale(0.96); opacity:0.85; }
         .toast-wrap { position:fixed; top:16px; right:12px; z-index:9999; display:flex; flex-direction:column; gap:8px; max-width:min(300px,calc(100vw - 24px)); pointer-events:none; }
         .toast { pointer-events:auto; background:rgba(39,205,120,0.95); color:#fff; border-radius:10px; padding:10px 12px; font-size:13px; font-weight:600; box-shadow:0 4px 14px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); opacity:1; }
         .toast.err { background:rgba(255,75,75,0.95); }
@@ -114,17 +112,7 @@
                 <div style="text-align:center;margin-bottom:18px;padding:4px 2px;">
                     <p style="font-size:15px;font-weight:700;color:#fff;line-height:1.55;margin-bottom:10px;">🌟 আপনার দুর্দান্ত ডিজিটাল যাত্রা শুরু হোক এখনই! 🚀</p>
                     <p style="font-size:13px;color:var(--muted);line-height:1.7;text-align:left;">
-                        🔒 আপনার সর্বোচ্চ নিরাপত্তা ও নির্বিঘ্ন অভিজ্ঞতা নিশ্চিত করতে আমরা ব্যবহার করছি বিশ্বের সবচেয়ে সেরা <b style="color:#4ade80;">Google সিকিউরিটি সিস্টেম</b>। 🔑 কোনো জটিল পাসওয়ার্ড মনে রাখার ঝামেলা ছাড়াই মাত্র ১-ক্লিকে আমাদের সাথে যুক্ত হোন! ✨<br><br>
-
-                        <b style="color:#38bdf8;">🎁 লগইন করার অসাধারণ সব সুবিধাসমূহ:</b><br>
-                        • ☁️ <b>স্বয়ংক্রিয় ক্লাউড ব্যাকআপ:</b> আপনার কাজের সকল প্রোগ্রেস ও ডেটা থাকবে আজীবন নিরাপদ।<br>
-                        • 📲 <b>মাল্টি-ডিভাইস এক্সেস:</b> ফোন, ট্যাব বা ল্যাপটপ—যেকোনো ডিভাইস থেকে নিজের প্রোফাইলে ঢুকুন।<br>
-                        • ⚡ <b>সুপারফাস্ট সাইন-ইন:</b> কোনো ফর্ম পূরণ না করেই মাত্র এক ক্লিকে নিমেষেই অ্যাপে প্রবেশ।<br>
-                        • 👑 <b>এক্সক্লুসিভ ফিচার ও অফার:</b> আমাদের মেম্বার হয়ে বিশেষ সব আপডেট ও প্রিমিয়াম সুবিধা উপভোগ করুন।<br><br>
-
-                        <b style="color:#f87171;">⚠️ সাইন-ইন না করলে যেসব বড় ক্ষতি বা অসুবিধা হবে:</b><br>
-                        • 🚫 <b>সীমিত ব্যবহার:</b> অনেক জরুরি ও দরকারি ফিচার ব্যবহারে বাধা তৈরি হবে।<br>
-                        • ❓ <b>কোনো প্রোফাইল আইডেন্টিটি থাকবে না:</b> আপনার ইউনিক আইডি না থাকায় যেকোনো সমস্যায় সাপোর্ট পাওয়া কঠিন হবে।
+                        🔒 আপনার সর্বোচ্চ নিরাপত্তা ও নির্বিঘ্ন অভিজ্ঞতা নিশ্চিত করতে আমরা ব্যবহার করছি বিশ্বের সবচেয়ে সেরা <b style="color:#4ade80;">Google সিকিউরিটি সিস্টেম</b>। 🔑 কোনো জটিল পাসওয়ার্ড মনে রাখার ঝামেলা ছাড়াই মাত্র ১-ক্লিকে আমাদের সাথে যুক্ত হোন! ✨
                     </p>
                 </div>
                 <button type="button" id="btnGoogle" class="btn google">
@@ -132,10 +120,10 @@
                 </button>
             </div>
 
-            <!-- YEAR / DATE (শুধু নতুন ইউজার) -->
+            <!-- YEAR / DATE (নতুন ইউজারদের জন্য) -->
             <div id="birth" class="panel">
                 <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:12px;line-height:1.55;">
-                    Google অ্যাকাউন্টের জন্য জন্ম সাল <b>অথবা</b> পূর্ণ তারিখ দিন (যেকোনো একটি)। ৫ বছরের নিচে অনুমোদিত নয়।
+                    নতুন অ্যাকাউন্ট তৈরির জন্য জন্ম সাল <b>অথবা</b> পূর্ণ তারিখ দিন (যেকোনো একটি)। ৫ বছরের নিচে অনুমোদিত নয়।
                 </p>
                 <div class="ib" style="margin-bottom:10px;">
                     <label>জন্ম তারিখ লিখুন</label>
@@ -153,11 +141,6 @@
                             <input type="text" inputmode="numeric" maxlength="4" id="gYear" placeholder="YYYY" style="text-align:center;">
                         </div>
                     </div>
-                    <small class="help">উদাহরণ: দিন ০৫ · মাস ০৩ · বছর ২০০৮</small>
-                </div>
-                <div class="ib" style="margin-top:10px;">
-                    <label for="gAddress">ঠিকানা <span style="font-weight:400;color:var(--muted);">(ঐচ্ছিক)</span></label>
-                    <input type="text" id="gAddress" maxlength="240" autocomplete="street-address" placeholder="আপনার ঠিকানা">
                 </div>
                 <p style="font-size:12px;color:var(--muted);text-align:center;margin:8px 0;">— অথবা নিচ থেকে শুধু সাল বেছে নিন —</p>
                 <div class="year-grid" id="grid"></div>
@@ -244,7 +227,7 @@ function packUser(uid, data) {
 }
 
 /**
- * ইমেইল দিয়ে আগের অ্যাকাউন্ট বা ব্লক স্টেট চেক করার ফাংশন
+ * শুধু KR pro math master কালেকশন থেকে ইমেইল দিয়ে ইউজার চেক করা (ডিলিট হওয়া অ্যাকাউন্ট মুছে গেছে ধরে নতুন হিসেবে গণ্য করা)
  */
 async function lookupUser(email) {
   email = String(email || "").toLowerCase().trim();
@@ -254,13 +237,13 @@ async function lookupUser(email) {
   for (const d of snap.docs) {
     if (d.id.startsWith("_")) continue;
     const data = d.data() || {};
-    return { profile: packUser(data.uid || d.id, data), blocked: data.blocked === true };
+    return packUser(data.uid || d.id, data);
   }
   return null;
 }
 
 /**
- * ইমেইল ব্লক করার ফাংশন (৫ বছরের নিচে সিলেক্ট করলে)
+ * ৫ বছরের নিচে অ্যাকাউন্ট ব্লক করার ফাংশন
  */
 async function blockUserEmail(info, age) {
   const email = String(info.email || "").toLowerCase().trim();
@@ -278,7 +261,7 @@ async function blockUserEmail(info, age) {
 }
 
 /**
- * নতুন ইমেলের জন্য ৮ ডিজিটের UID সহ ইউজার অ্যাকাউন্ট তৈরির ফাংশন
+ * নতুন ইমেলের জন্য ৮ ডিজিটের UID সহ ইউজার অ্যাকাউন্ট তৈরির ফাংশন (KR-XXXXXXXX)
  */
 async function createUserDoc(info) {
   const joined = new Date().toLocaleDateString("en-GB");
@@ -305,7 +288,7 @@ async function createUserDoc(info) {
     created_at: TS()
   });
 
-  // ৮ ডিজিটের ইউনিক KR-UID জেনারেট (KR-XXXXXXXX)
+  // ৮ ডিজিটের ইউনিক UID জেনারেট (KR-XXXXXXXX)
   for (let i = 0; i < 6; i++) {
     const uid = "KR-" + Math.floor(10000000 + Math.random() * 90000000);
     const ref = userRef(uid);
@@ -418,7 +401,6 @@ async function finish(p, title) {
     (p.birth_year ? "জন্ম সাল: <b>" + esc(p.birth_year) + "</b><br>" : "") +
     (p.birth_date ? "জন্ম তারিখ: <b>" + esc(p.birth_date) + "</b><br>" : "") +
     (p.joined ? "যোগদান: <b>" + esc(p.joined) + "</b><br>" : "") +
-    (p.address ? "ঠিকানা: <b>" + esc(p.address) + "</b><br>" : "") +
     "<br><span id=\"okCountdown\">২ সেকেন্ড পর অ্যাপে ফিরে যাচ্ছে…</span>";
   go("success");
   await Promise.race([rt, new Promise(r => setTimeout(r, 800))]);
@@ -436,7 +418,7 @@ async function finish(p, title) {
 
 $("btnReturn").onclick = () => { if (CUR) notifyApp(CUR); returnToApp(); };
 
-/* ---------- জন্ম সাল/তারিখ (শুধু নতুন ইউজার) ---------- */
+/* ---------- জন্ম সাল/তারিখ (নতুন ইউজারদের জন্য) ---------- */
 const CY = new Date().getFullYear();
 let selYear = null, pend = null;
 const F = ["gDay", "gMonth", "gYear"];
@@ -486,7 +468,6 @@ function refresh() {
 }
 function resetBirth() {
   selYear = null; F.forEach(i => { $(i).value = ""; $(i).disabled = false; });
-  $("gAddress").value = "";
   $("grid").querySelectorAll(".sel").forEach(x => x.classList.remove("sel")); refresh();
 }
 [["gDay", 31, 2], ["gMonth", 12, 2], ["gYear", CY, 4]].forEach(([id, max, len]) => {
@@ -513,7 +494,7 @@ $("btnConfirm").onclick = async () => {
     busy(btn, true, "যাচাই হচ্ছে…");
     try {
       await blockUserEmail(info, s.age);
-      toast("৫ বছরের নিচে অ্যাকাউন্ট অনুমোদিত নয়। আপনার ইমেইলটি ব্লক করা হলো।", "err");
+      toast("৫ বছরের নিচে অ্যাকাউন্ট অনুমোদিত নয়।", "err");
     } catch (err) {
       toast("বয়সের সীমাবদ্ধতার কারণে অ্যাকাউন্ট তৈরি করা সম্ভব হয়নি।", "err");
     } finally {
@@ -525,7 +506,7 @@ $("btnConfirm").onclick = async () => {
   busy(btn, true, "সেভ হচ্ছে…");
   try {
     const p = await createUserDoc({
-      name: info.name, email: info.email, avatar: info.photo, address: $("gAddress").value.trim(),
+      name: info.name, email: info.email, avatar: info.photo,
       auth_uid: info.auth_uid, email_verified: info.email_verified,
       birth_year: s.year, birth_date: s.date || ""
     });
@@ -614,18 +595,21 @@ async function processGoogle(resultOrUser) {
     return;
   }
 
-  if (found && found.blocked) {
-    busy(b, false);
-    toast("এই ইমেইলটি নীতিমালার কারণে ব্লক করা হয়েছে। পরবর্তীতে এই ইমেইল দিয়ে লগইন করা যাবে না।", "err");
-    return;
-  }
-
   if (found) {
     busy(b, false);
-    let userProfile = found.profile;
-    if (gu && gu.photoURL && !userProfile.avatar) {
+    let userProfile = found;
+    // নাম বা ছবি আপডেট থাকলে তা সিঙ্ক করে নেওয়া
+    const updates = {};
+    if (gu && gu.displayName && !userProfile.name) {
+      userProfile.name = gu.displayName;
+      updates.name = gu.displayName;
+    }
+    if (gu && gu.photoURL && userProfile.avatar !== gu.photoURL) {
       userProfile.avatar = gu.photoURL;
-      try { await userRef(userProfile.uid).update({ avatar: gu.photoURL }); } catch (err) {}
+      updates.avatar = gu.photoURL;
+    }
+    if (Object.keys(updates).length > 0) {
+      try { await userRef(userProfile.uid).update(updates); } catch (err) {}
     }
 
     await finish(userProfile, "Google লগইন সফল!");
@@ -642,7 +626,7 @@ async function processGoogle(resultOrUser) {
   };
   resetBirth();
   go("birth");
-  toast("বয়স নিশ্চিতে জন্ম সাল নির্বাচন করুন।", "info");
+  toast("নতুন অ্যাকাউন্ট! জন্ম সাল নির্বাচন করুন।", "info");
 }
 
 function gErr(e) {
