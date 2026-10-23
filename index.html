@@ -185,6 +185,18 @@ const TS = () => firebase.firestore.FieldValue.serverTimestamp();
 const $ = id => document.getElementById(id);
 const q = new URLSearchParams(location.search);
 
+/** সবসময় ৮ সংখ্যার UID: KR-XXXXXXXX (৬ সংখ্যা নয়) */
+function makeEightDigitUid() {
+  var n = Math.floor(10000000 + Math.random() * 90000000); // 10000000–99999999
+  var s = String(n);
+  while (s.length < 8) s = "0" + s;
+  if (s.length > 8) s = s.slice(-8);
+  return "KR-" + s;
+}
+function isEightDigitKrUid(uid) {
+  return /^KR-\d{8}$/i.test(String(uid || ""));
+}
+
 function toast(m, t) {
   const e = document.createElement("div"); e.className = "toast " + (t || ""); e.textContent = m;
   $("toasts").appendChild(e); setTimeout(() => e.remove(), 4000);
@@ -229,17 +241,45 @@ function packUser(uid, data) {
 /**
  * শুধু KR pro math master কালেকশন থেকে ইমেইল দিয়ে ইউজার চেক করা (ডিলিট হওয়া অ্যাকাউন্ট মুছে গেছে ধরে নতুন হিসেবে গণ্য করা)
  */
+/**
+ * ইমেইল দিয়ে বিদ্যমান ইউজার খোঁজা — শুধু আসল UID ডক (KR-XXXXXXXX)।
+ * _session_last / _session_* / BLOCKED-* জাতীয় ডক উপেক্ষা।
+ * না পাওয়া গেলে null = নতুন অ্যাকাউন্ট।
+ */
 async function lookupUser(email) {
   email = String(email || "").toLowerCase().trim();
   if (!email) return null;
 
-  const snap = await db.collection(COL).where("email", "==", email).limit(1).get();
+  const snap = await db.collection(COL).where("email", "==", email).limit(5).get();
   for (const d of snap.docs) {
-    if (d.id.startsWith("_")) continue;
+    const id = String(d.id || "");
+    // সেশন/সিস্টেম ডক স্কিপ
+    if (id.startsWith("_")) continue;
+    if (id.indexOf("_session") >= 0) continue;
+    if (/^BLOCKED/i.test(id)) continue;
     const data = d.data() || {};
-    return packUser(data.uid || d.id, data);
+    if (data.blocked === true) continue;
+    // শুধু বৈধ UID ডক
+    const uid = String(data.uid || id);
+    if (!/^KR-\d{6,14}$/i.test(uid) && !/^KR-\d{8}$/i.test(id)) {
+      // id নিজেই KR- হলে চলবে
+      if (!/^KR-/i.test(id)) continue;
+    }
+    return packUser(uid.startsWith("KR-") || uid.startsWith("kr-") ? uid : id, data);
   }
   return null;
+}
+
+/** UID ডক আছে কি না — না থাকলে নতুন */
+async function uidExists(uid) {
+  uid = String(uid || "").trim();
+  if (!uid || uid.startsWith("_")) return false;
+  try {
+    const snap = await userRef(uid).get();
+    return !!(snap && snap.exists);
+  } catch (e) {
+    return false;
+  }
 }
 
 /**
@@ -249,7 +289,7 @@ async function blockUserEmail(info, age) {
   const email = String(info.email || "").toLowerCase().trim();
   if (!email) return;
 
-  const docId = "BLOCKED-" + Math.floor(10000000 + Math.random() * 90000000);
+  const docId = "BLOCKED-" + makeEightDigitUid().replace(/^KR-/i, "");
   await db.collection(COL).doc(docId).set({
     email: email,
     name: info.name || "",
@@ -273,13 +313,14 @@ async function createUserDoc(info) {
   });
   const buildFull = (uid) => ({
     uid: uid,
-    name: info.name || "",
+    name: String(info.name || "").trim() || "ইউজার",
     email: String(info.email || "").toLowerCase().trim(),
     birth_year: info.birth_year || "",
     birth_date: info.birth_date || "",
     joined: joined,
     address: info.address || "",
     avatar: info.avatar || null,
+    photoURL: info.avatar || null,
     credit: 0,
     app_permission: true,
     provider: "google",
@@ -288,15 +329,16 @@ async function createUserDoc(info) {
     created_at: TS()
   });
 
-  // ৮ ডিজিটের ইউনিক UID জেনারেট (KR-XXXXXXXX)
-  for (let i = 0; i < 6; i++) {
-    const uid = "KR-" + Math.floor(10000000 + Math.random() * 90000000);
+  // শুধু UID চেক — ডক না থাকলে নতুন; _session_* কখনো তৈরি নয়
+  for (let i = 0; i < 10; i++) {
+    const uid = makeEightDigitUid();
+    if (await uidExists(uid)) continue; // আছে → অন্য UID
     const ref = userRef(uid);
     const full = buildFull(uid);
     try {
       const created = await db.runTransaction(async tx => {
         const snap = await tx.get(ref);
-        if (snap.exists) return false;
+        if (snap.exists) return false; // UID আছে = নতুন নয়
         tx.set(ref, full);
         return true;
       });
@@ -304,16 +346,19 @@ async function createUserDoc(info) {
     } catch (txError) {
       const code = String(txError && txError.code || "");
       if (code === "permission-denied" || code === "firestore/permission-denied") {
-        const directUid = "KR-" + Math.floor(10000000 + Math.random() * 90000000);
-        const directFull = buildFull(directUid);
-        await userRef(directUid).set(directFull);
-        return makeProfile(directUid, directFull);
+        const directUid = makeEightDigitUid();
+        if (!(await uidExists(directUid))) {
+          const directFull = buildFull(directUid);
+          await userRef(directUid).set(directFull);
+          return makeProfile(directUid, directFull);
+        }
+        continue;
       }
       throw txError;
     }
   }
 
-  const fallbackUid = "KR-" + Math.floor(10000000 + Math.random() * 90000000);
+  const fallbackUid = makeEightDigitUid();
   const fallbackFull = buildFull(fallbackUid);
   await userRef(fallbackUid).set(fallbackFull);
   return makeProfile(fallbackUid, fallbackFull);
@@ -323,7 +368,8 @@ function handoff(p) {
   const uid = String(p.uid), now = Date.now();
   const pay = {
     uid: uid, name: p.name || "", email: String(p.email || "").toLowerCase(),
-    avatar: p.avatar || "", birth_year: p.birth_year || "", birth_date: p.birth_date || "",
+    avatar: p.avatar || "", photoURL: p.avatar || p.photoURL || "",
+    birth_year: p.birth_year || "", birth_date: p.birth_date || "",
     joined: p.joined || "", address: p.address || "", credit: Number(p.credit || 0),
     app_permission: p.app_permission !== false, at: now, expiresAt: now + 30 * 60 * 1000
   };
@@ -341,6 +387,8 @@ function handoff(p) {
     }));
   } catch (e) {}
 
+  // _session_last / _session_* জাতীয় ডক তৈরি করা হয় না
+  // শুধু RTDB হ্যান্ডঅফ (ক্যালকুলেটর অটো-লগইন) + লোকাল স্টোরেজ
   const jobs = [];
   if (rtdb) {
     try { jobs.push(Promise.resolve(rtdb.ref(COL + "/লগইন_সেশন/শেষ").set(pay)).catch(function(){})); } catch (e) {}
@@ -538,36 +586,78 @@ async function resolveGoogleProfile(resultOrUser) {
   const result = resultOrUser && resultOrUser.user ? resultOrUser : null;
   const user = result ? result.user : resultOrUser;
   if (!user) return null;
-  const profile = (result && result.additionalUserInfo && result.additionalUserInfo.profile) || {};
+  const profile = Object.assign({}, (result && result.additionalUserInfo && result.additionalUserInfo.profile) || {});
   let credential = null;
   try {
     credential = (result && result.credential) ||
-      (result && firebase.auth.GoogleAuthProvider.credentialFromResult(result)) || null;
+      (result && firebase.auth.GoogleAuthProvider.credentialFromResult
+        ? firebase.auth.GoogleAuthProvider.credentialFromResult(result)
+        : null) || null;
   } catch (e) {}
   const googleData = (user.providerData || []).find(x => x && x.providerId === "google.com") || {};
-  let email = user.email || googleData.email || profile.email || emailFromIdToken(credential && credential.idToken);
-  if (!email && credential && credential.accessToken) {
+  let email = user.email || googleData.email || profile.email || emailFromIdToken(credential && credential.idToken) || "";
+  let infoName = "";
+  let infoPicture = "";
+  // Google userinfo API — সঠিক নাম/ছবি (displayName খালি থাকলেও)
+  const tryUserInfo = async (token) => {
+    if (!token) return;
     try {
       const response = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-        headers: { Authorization: "Bearer " + credential.accessToken }
+        headers: { Authorization: "Bearer " + token }
       });
       if (response.ok) {
         const info = await response.json();
-        email = info.email || "";
-        profile.name = profile.name || info.name;
-        profile.picture = profile.picture || info.picture;
-        profile.email_verified = profile.email_verified || info.email_verified;
+        if (info.email) email = email || info.email;
+        if (info.name) infoName = String(info.name).trim();
+        if (info.given_name || info.family_name) {
+          const composed = [info.given_name, info.family_name].filter(Boolean).join(" ").trim();
+          if (composed && !infoName) infoName = composed;
+        }
+        if (info.picture) infoPicture = String(info.picture).trim();
+        if (info.email_verified != null) profile.email_verified = info.email_verified;
+      }
+    } catch (e) {}
+  };
+  if (credential && credential.accessToken) await tryUserInfo(credential.accessToken);
+  // idToken থেকেও চেষ্টা
+  if ((!infoName || !email) && credential && credential.idToken) {
+    try {
+      const part = String(credential.idToken).split(".")[1];
+      if (part) {
+        const b64 = part.replace(/-/g, "+").replace(/_/g, "/");
+        const json = atob(b64 + "=".repeat((4 - b64.length % 4) % 4));
+        const payload = JSON.parse(decodeURIComponent(Array.prototype.map.call(json, c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")));
+        if (payload.email) email = email || payload.email;
+        if (payload.name) infoName = infoName || String(payload.name).trim();
+        if (payload.picture) infoPicture = infoPicture || String(payload.picture).trim();
       }
     } catch (e) {}
   }
   if (!email && typeof user.reload === "function") {
-    try { await user.reload(); email = user.email || ""; } catch (e) {}
+    try { await user.reload(); email = user.email || email; } catch (e) {}
   }
   email = String(email || "").toLowerCase().trim();
+  // নাম অগ্রাধিকার: Google profile API → Firebase user → providerData → given+family
+  var displayName = (
+    infoName ||
+    (user.displayName && String(user.displayName).trim()) ||
+    (googleData.displayName && String(googleData.displayName).trim()) ||
+    (profile.name && String(profile.name).trim()) ||
+    ([profile.given_name, profile.family_name].filter(Boolean).join(" ").trim()) ||
+    ""
+  );
+  // ইমেইল-প্রিফিক্স নাম হিসেবে ধরা হবে না যদি আসল নাম পাওয়া যায়
+  var photoURL = (
+    infoPicture ||
+    (user.photoURL && String(user.photoURL).trim()) ||
+    (googleData.photoURL && String(googleData.photoURL).trim()) ||
+    (profile.picture && String(profile.picture).trim()) ||
+    ""
+  );
   return {
-    email,
-    displayName: user.displayName || googleData.displayName || profile.name || "",
-    photoURL: user.photoURL || googleData.photoURL || profile.picture || "",
+    email: email,
+    displayName: displayName,
+    photoURL: photoURL,
     uid: user.uid || "",
     emailVerified: user.emailVerified === true || profile.email_verified === true
   };
@@ -598,15 +688,32 @@ async function processGoogle(resultOrUser) {
   if (found) {
     busy(b, false);
     let userProfile = found;
-    // নাম বা ছবি আপডেট থাকলে তা সিঙ্ক করে নেওয়া
     const updates = {};
-    if (gu && gu.displayName && !userProfile.name) {
-      userProfile.name = gu.displayName;
-      updates.name = gu.displayName;
+    const gName = (gu && gu.displayName) ? String(gu.displayName).trim() : "";
+    const gPhoto = (gu && gu.photoURL) ? String(gu.photoURL).trim() : "";
+    const curName = String(userProfile.name || "").trim();
+    const emailLocal = email.split("@")[0] || "";
+    // Google-এর সঠিক নাম অগ্রাধিকার — খালি / ইউজার / ইমেইল-প্রিফিক্স হলে আপডেট
+    if (gName) {
+      const weak = !curName || curName === "ইউজার" || curName === "User" ||
+        curName.toLowerCase() === emailLocal.toLowerCase() ||
+        curName.toLowerCase() === email.toLowerCase();
+      if (weak || curName !== gName) {
+        // weak হলে অবশ্যই; নতুবা Google নাম ভিন্ন হলেও সিঙ্ক (সঠিক নাম)
+        if (weak || !curName) {
+          userProfile.name = gName;
+          updates.name = gName;
+        } else if (gName.length >= 2) {
+          // আগের নাম থাকলেও Google নাম আপডেট (ইউজার চেয়েছিল সঠিক নাম)
+          userProfile.name = gName;
+          updates.name = gName;
+        }
+      }
     }
-    if (gu && gu.photoURL && userProfile.avatar !== gu.photoURL) {
-      userProfile.avatar = gu.photoURL;
-      updates.avatar = gu.photoURL;
+    if (gPhoto && userProfile.avatar !== gPhoto) {
+      userProfile.avatar = gPhoto;
+      updates.avatar = gPhoto;
+      updates.photoURL = gPhoto;
     }
     if (Object.keys(updates).length > 0) {
       try { await userRef(userProfile.uid).update(updates); } catch (err) {}
@@ -616,9 +723,13 @@ async function processGoogle(resultOrUser) {
     return;
   }
 
+  // নতুন অ্যাকাউন্ট — অবশ্যই জন্ম তারিখ/সাল নিতে birth প্যানেলে
   busy(b, false);
+  const newName = (gu && gu.displayName && String(gu.displayName).trim())
+    ? String(gu.displayName).trim()
+    : (email.split("@")[0] || "ইউজার");
   pend = {
-    name: (gu && gu.displayName) || email.split("@")[0] || "ইউজার",
+    name: newName,
     email: email,
     photo: (gu && gu.photoURL) || null,
     auth_uid: (gu && gu.uid) || "",
@@ -626,7 +737,7 @@ async function processGoogle(resultOrUser) {
   };
   resetBirth();
   go("birth");
-  toast("নতুন অ্যাকাউন্ট! জন্ম সাল নির্বাচন করুন।", "info");
+  toast("নতুন অ্যাকাউন্ট! জন্ম তারিখ বা সাল দিন (৮ সংখ্যার UID তৈরি হবে)।", "info");
 }
 
 function gErr(e) {
@@ -643,17 +754,20 @@ window.receiveNativeGoogleSignIn = async function (info) {
     if (!info) { toast("Google সাইন-ইন সম্পন্ন হয়নি।", "err"); return; }
     const email = String(info.email || "").toLowerCase().trim();
     if (!email) { toast("ইমেইল পাওয়া যায়নি।", "err"); return; }
+    const natName = String(info.name || info.displayName || info.fullName || info.full_name || "").trim()
+      || email.split("@")[0] || "ইউজার";
+    const natPhoto = String(info.photo || info.photoURL || info.picture || info.avatar || "").trim();
     const fake = {
       user: {
         email: email,
-        displayName: info.name || info.displayName || email.split("@")[0] || "ইউজার",
-        photoURL: info.photo || info.photoURL || "",
+        displayName: natName,
+        photoURL: natPhoto,
         uid: info.uid || info.auth_uid || "",
         emailVerified: true,
-        providerData: [{ providerId: "google.com", email: email, displayName: info.name || "", photoURL: info.photo || "" }],
+        providerData: [{ providerId: "google.com", email: email, displayName: natName, photoURL: natPhoto }],
         reload: async function () {}
       },
-      additionalUserInfo: { profile: { email: email, name: info.name || "", picture: info.photo || "", email_verified: true } },
+      additionalUserInfo: { profile: { email: email, name: natName, picture: natPhoto, given_name: info.given_name || "", family_name: info.family_name || "", email_verified: true } },
       credential: null
     };
     await processGoogle(fake);
